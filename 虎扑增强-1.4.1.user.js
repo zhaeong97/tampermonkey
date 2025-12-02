@@ -3,7 +3,7 @@
 // @name:en      Hupu Enhancement
 // @name:zh-CN   虎扑增强
 // @namespace    http://tampermonkey.net/
-// @version      1.4.0
+// @version      1.4.1
 // @description  虎扑帖子图片优化、视频悬浮、评论交互增强、工具栏优化等多项功能，提升虎扑浏览体验
 // @description:zh-CN  虎扑帖子图片优化、视频悬浮、评论交互增强、工具栏优化等多项功能，提升虎扑浏览体验
 // @description:en Hu Pu post image optimization, video suspension, comment interaction enhancement, toolbar optimization and other functions enhance the Hu Pu browsing experience
@@ -380,7 +380,7 @@
                 const nextDataStr = $('#__NEXT_DATA__').text();
                 return JSON.parse(nextDataStr);
             } catch (e) {
-                console.error('页面数据获取失败', e);
+                console.error('[页面数据]获取失败', e);
             }
         },
 
@@ -394,7 +394,7 @@
                     return pageInfo.detail.thread.author;
                 }
             } catch (e) {
-
+                console.error('[页面数据-楼主信息]获取失败', e);
             }
         },
 
@@ -408,7 +408,7 @@
                     return pageInfo.detail.user;
                 }
             } catch (e) {
-
+                console.error('[页面数据-当前登录人用户信息]获取失败', e);
             }
         }
     };
@@ -513,7 +513,7 @@
                     /* width: auto !important; */
                     /* a键放大时，如果竖向视频控制的是[height: __通过视频父级元素的宽度px,按比例计算的hoverHeight,达成另一层意义上的width:100%__px] 也可以做到丝滑 */
                     /* 但此处 还是采用[width: 100%]来控制视频最大化，所以需要动态计算width，做成与横向视频一样逻辑的处理方式 */
-                    
+
                     /* 因此，需要像横向视频一样设定： */
                     /* width 宽度使用动态计算，高度自动 */
                     height: auto !important;
@@ -786,9 +786,8 @@
                         });
                     }
                 }
-
             } catch (e) {
-
+                console.error('[标记楼主身份]执行失败', e);
             }
         },
 
@@ -1015,13 +1014,13 @@
          * 绑定事件 */
         bindEvents() {
             // 使用节流函数优化滚动性能
-            $(window).on('scroll', Utils.throttle(() => {
-                this.handleScroll();
+            $(window).on('scroll', Utils.throttle(async () => {
+                await this.handleScroll();
             }, 100));
 
             // 窗口大小改变时重新计算
-            $(window).on('resize', Utils.throttle(() => {
-                this.handleScroll();
+            $(window).on('resize', Utils.throttle(async () => {
+                await this.handleScroll();
             }, 200));
 
             // 监听播放事件（新视频播放，切换到悬浮窗）
@@ -1131,8 +1130,8 @@
             // 关闭按钮事件
             this.$floatContainer.find('.hupu-video-float-close').on('click', (e) => {
                 e.stopPropagation();
-                this.restoreVideo();
                 this.isManuallyClosed = true;
+                this.restoreVideo();
             });
 
             // 添加调整大小功能
@@ -1260,7 +1259,7 @@
 
         /**
          * 处理滚动事件 */
-        handleScroll() {
+        async handleScroll() {
             if (!CONFIG.videoFloat.enabled || !this.initialized) return;
 
             // 仅悬浮主贴视频
@@ -1275,7 +1274,7 @@
             if (this.$currentFloatVideo && this.$placeholder) {
                 // 检查原位置是否在视口内
                 if (Utils.isElementInViewport(this.$placeholder)) {
-                    this.restoreVideo();
+                    await this.restoreVideo();
                     return;
                 }
 
@@ -1318,7 +1317,7 @@
             // 如果没有找到需要悬浮的视频且当前有悬浮视频，检查是否应该还原
             if (!foundVideoToFloat && this.$currentFloatVideo) {
                 if (Utils.isElementInViewport(this.$placeholder)) {
-                    this.restoreVideo();
+                    await this.restoreVideo();
                 }
             }
         },
@@ -1326,37 +1325,47 @@
         /**
          * 悬浮视频 */
         floatVideo($video) {
-            if (this.$currentFloatVideo || this.isManuallyClosed) return;
+            // 为确保 this.$floatContainer.fadeIn('slow'); 的原子性，所以要用Promise。
+            return new Promise((resolve, reject) => {
+                // 视频已悬浮或被手动关闭
+                if (this.$currentFloatVideo || this.isManuallyClosed) {
+                    resolve();
+                    return;
+                }
 
-            // 1. 保存原视频的引用
-            this.$currentFloatVideo = $video;
+                // 1. 保存原视频的引用
+                this.$currentFloatVideo = $video;
 
-            // 2. 根据视频方向计算悬浮容器尺寸
-            const floatSize = this.calculateFloatSize($video);
-            this.$floatContainer.css({
-                'width': floatSize.width,
-                'height': floatSize.height
-            });
-
-            // 3. 在原位置创建占位符
-            this.createPlaceholder($video);
-
-            // 4. 将视频移动到悬浮容器
-            this.moveVideoToFloatContainer($video);
-
-            // 5. 如果悬浮容器当前是隐藏状态，则重置到初始位置（如果已经是显示状态，保持当前位置不变）
-            /* if (this.$$floatContainer.css('display') === 'none') {
-                this.$$floatContainer.css({
-                    'top': CONFIG.videoFloat.top + 'px',
-                    'bottom': CONFIG.videoFloat.bottom + 'px',
-                    'left': CONFIG.videoFloat.left + 'px',
-                    'right': CONFIG.videoFloat.right + 'px',
-                    'transform': 'none'
+                // 2. 根据视频方向计算悬浮容器尺寸
+                const floatSize = this.calculateFloatSize($video);
+                this.$floatContainer.css({
+                    'width': floatSize.width,
+                    'height': floatSize.height
                 });
-            } */
 
-            // 6. 显示悬浮容器
-            this.$floatContainer.fadeIn('slow');
+                // 3. 在原位置创建占位符
+                this.createPlaceholder($video);
+
+                // 4. 将视频移动到悬浮容器
+                this.moveVideoToFloatContainer($video);
+
+                // 5. 如果悬浮容器当前是隐藏状态，则重置到初始位置（如果已经是显示状态，保持当前位置不变）
+                /* if (this.$$floatContainer.css('display') === 'none') {
+                    this.$$floatContainer.css({
+                        'top': CONFIG.videoFloat.top + 'px',
+                        'bottom': CONFIG.videoFloat.bottom + 'px',
+                        'left': CONFIG.videoFloat.left + 'px',
+                        'right': CONFIG.videoFloat.right + 'px',
+                        'transform': 'none'
+                    });
+                } */
+
+                // 6. 显示悬浮容器
+                this.$floatContainer.fadeIn('slow');
+
+                // 兑现
+                resolve();
+            });
         },
 
         /**
@@ -1407,34 +1416,55 @@
         /**
          * 还原视频 */
         restoreVideo() {
-            if (!this.$currentFloatVideo || !this.$placeholder) return;
+            // 检查是否有悬浮视频需要还原
+            if (!this.$currentFloatVideo || !this.$placeholder) return Promise.resolve();
 
-            const $video = this.$currentFloatVideo;
+            /*
+             * 【异步处理原因】
+             * 问题：视频开始播放后 1秒内立马将视频滚出视口，会出现浮窗空白的问题。（极端但稳定复现）
+             * 原因：悬浮容器使用 fadeOut('fast') 做渐隐动画（耗时约200ms），不等动画结束再清理DOM的话 就会出现上面的问题
+             * 解决：用Promise等动画结束；另：如果直接hide()同步隐藏，根本不用搞这些
+             * 总结：就是为了“渐隐这盘醋”，特意包了“Promise这顿饺子” ——纯属可优化的“仪式感”操作 😂
+             * （小声密谋：这一步不是必须的，只是为了动画效果才加的Promise）
+             */
 
-            // 1. 隐藏悬浮容器，并将视频从悬浮容器中移除
-            this.$floatContainer.fadeOut('fast', () => {
-                this.$floatContainer.find('video').remove();
+            return new Promise((resolve) => {
+                try {
+                    const $video = this.$currentFloatVideo;
+
+                    // 1. 隐藏悬浮容器，并将视频从悬浮容器中移除
+                    this.$floatContainer.fadeOut('fast', () => {
+                        // 兑现
+                        resolve();
+                    });
+
+                    // 移除video
+                    this.$floatContainer.find('video').remove();
+
+                    // 2. 将视频移回原位置（占位符之前）
+                    this.$placeholder.before($video);
+
+                    // 3. 恢复视频的原始样式（移除悬浮容器添加的样式）
+                    $video.removeAttr('style');
+
+                    // 4. 移除占位符
+                    this.$placeholder.remove();
+                    this.$placeholder = null;
+
+                    // 5. 清除当前视频引用
+                    this.$currentFloatVideo = null;
+
+                    // 6. 停止拖动状态（确保不会卡在拖动状态）
+                    this.stopDrag();
+
+                    // 7. 如果需要，滚动到视频位置
+                    // Utils.scrollToElement($video);
+
+                } catch (err) {
+                    console.error('[还原视频]执行异常：', err);
+                    resolve(); // 出错也resolve，避免阻塞后续
+                }
             });
-
-            // 2. 将视频移回原位置（占位符之前）
-            this.$placeholder.before($video);
-
-            // 3. 恢复视频的原始样式（移除悬浮容器添加的样式）
-            $video.removeAttr('style');
-
-            // 4. 移除占位符
-            this.$placeholder.remove();
-            this.$placeholder = null;
-
-            // 5. 清除当前视频引用
-            this.$currentFloatVideo = null;
-
-            // 6. 停止拖动状态（确保不会卡在拖动状态）
-            this.stopDrag();
-
-            // 7. 如果需要，滚动到视频位置
-            // Utils.scrollToElement($video);
-
         },
 
         /**
@@ -1448,9 +1478,11 @@
 
             // 如果当前没有悬浮视频
             if (!this.$currentFloatVideo || !this.$placeholder) {
-                // 直接悬浮新视频（没有悬浮视频 不悬浮，可按需求解除注释）
-                this.floatVideo($newVideo);
-                // return;
+                // 当前视频不在视口内，直接悬浮新视频
+                if (!Utils.isElementInViewport($newVideo)) {
+                    this.floatVideo($newVideo);
+                }
+                return;
             }
 
             // 保存当前悬浮视频的引用
@@ -2412,7 +2444,7 @@
 
 
             // 添加按键说明弹窗的CSS
-            Utils.addCSS(`               
+            Utils.addCSS(`
                 /* 按键说明弹窗样式 */
                 .key-info-icon {
                     cursor: pointer;
@@ -2420,51 +2452,51 @@
                     margin-left: 10px;
                     transition: color 0.3s ease;
                 }
-                
+
                 .key-info-icon:hover {
                     color: #ff4757 !important;
                 }
-                
+
                 .key-info-table {
                     width: 100%;
                     border-collapse: collapse;
                     margin: 10px 0;
                     font-size: 14px;
                 }
-                
+
                 .key-info-table th {
                     background-color: #f8f9fa;
                     font-weight: bold;
                     padding: 10px;
                     border: 1px solid #ddd;
                 }
-                
+
                 .key-info-table td {
                     border: 1px solid #ddd;
                     padding: 10px;
                 }
-                
+
                 /* 完全不适合的按键 - 红色系 */
                 .key-status-unavailable {
                     color: #ff4757 !important;
                     font-weight: bold;
                     background-color: rgba(255, 71, 87, 0.1);
                 }
-                
+
                 .key-status-unavailable-title {
                     color: #ff4757;
                     font-size: 16px;
                     border-left: 4px solid #ff4757;
                     padding-left: 10px;
                 }
-                
+
                 /* 勉强可用的按键 - 黄色系 */
                 .key-status-barely {
                     color: #ff9f43 !important;
                     font-weight: bold;
                     background-color: rgba(255, 159, 67, 0.1);
                 }
-                
+
                 .key-status-barely-title {
                     color: #ff9f43;
                     margin-top: 20px;
@@ -2472,7 +2504,7 @@
                     border-left: 4px solid #ff9f43;
                     padding-left: 10px;
                 }
-                
+
                 .key-tips-box {
                     margin-top: 15px;
                     padding: 12px;
@@ -2753,7 +2785,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                        
+
                         <h4 class="key-status-barely-title">⚠️ 勉强可用（可能冲突）</h4>
                         <table class="key-info-table">
                             <thead>
@@ -2786,7 +2818,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                        
+
                         <div class="key-tips-box">
                             <strong>💡 建议：</strong>
                             推荐使用字母键（a-z）、数字键（0-9）或符号键作为快捷键，避免与系统功能冲突。
@@ -2983,7 +3015,7 @@
                                             <div class="layui-form-mid layui-word-aux">按下该键将视频最大化显示<i>（与图片同步）</i></div>
                                         </div>
                                     </div>
-                                    
+
                                     <blockquote class="layui-elem-quote layui-quote-nm" style="font-size: 12px; line-height: 1.5;">
                                         💡 视频显示尺寸说明：<br>
                                         • 默认尺寸：回复贴中视频的初始显示大小<br>
