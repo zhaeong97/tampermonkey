@@ -24,8 +24,8 @@
 // @grant        GM_getResourceText
 // @grant        GM_registerMenuCommand
 // @noframes
-// @downloadURL https://update.greasyfork.org/scripts/557606/%E8%99%8E%E6%89%91%E5%A2%9E%E5%BC%BA.user.js
-// @updateURL https://update.greasyfork.org/scripts/557606/%E8%99%8E%E6%89%91%E5%A2%9E%E5%BC%BA.meta.js
+// @downloadURL https://github.com/zhaeong97/tampermonkey/raw/refs/heads/main/hupu_enhancement/hupu-enhancement.user.js
+// @updateURL https://github.com/zhaeong97/tampermonkey/raw/refs/heads/main/hupu_enhancement/hupu_enhancement.meta.js
 // ==/UserScript==
 
 (function () {
