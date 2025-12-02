@@ -1,0 +1,47 @@
+name: 意见反馈
+description: 反馈脚本问题或功能建议
+labels: ["pending-review"]  # 默认初始标签
+body:
+  - type: dropdown
+    id: feedback_type
+    attributes:
+      label: 反馈类型
+      options:
+        - 🐞 功能 Bug
+        - ✨ 新功能建议
+        - 🎨 UI/样式优化
+        - 📝 文档问题
+        - 🔧 其他问题
+      required: true
+  - type: dropdown
+    id: script
+    attributes:
+      label: 关联脚本
+      options:
+        - 虎扑增强脚本
+        - 其他脚本（请注明）
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题/建议描述
+      placeholder: 请详细说明遇到的问题或建议的功能...
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤（仅 Bug 需填）
+      placeholder: 1. 打开XX页面 2. 点击XX按钮...
+      required: false
+  - type: input
+    id: browser
+    attributes:
+      label: 浏览器环境（仅 Bug 需填）
+      placeholder: Chrome 120 / Edge 119...
+      required: false
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充说明
+      placeholder: 截图(图床链接)、日志等其他信息...
+      required: false
