@@ -12,6 +12,7 @@ body:
         - 🎨 UI/样式优化
         - 📝 文档问题
         - 🔧 其他问题
+    validations:
       required: true
   - type: dropdown
     id: script
@@ -20,28 +21,39 @@ body:
       options:
         - 虎扑增强脚本
         - 其他脚本（请注明）
+    validations:
       required: true
   - type: textarea
     id: description
     attributes:
       label: 问题/建议描述
       placeholder: 请详细说明遇到的问题或建议的功能...
+    validations:
       required: true
   - type: textarea
     id: reproduction
     attributes:
       label: 复现步骤（仅 Bug 需填）
-      placeholder: 1. 打开XX页面 2. 点击XX按钮...
+      placeholder: |
+        1. 打开XX页面
+        2. 点击XX按钮
+        3. 观察到的现象...
+    validations:
       required: false
   - type: input
     id: browser
     attributes:
       label: 浏览器环境（仅 Bug 需填）
-      placeholder: Chrome 120 / Edge 119...
+      placeholder: "例如：Chrome 120 / Edge 119 / Firefox 121"
+    validations:
       required: false
   - type: textarea
     id: additional
     attributes:
       label: 补充说明
-      placeholder: 截图(图床链接)、日志等其他信息...
+      placeholder: |
+        截图（请使用图床链接）、日志、相关配置信息等...
+        
+        提示：可使用图床网站（如imgur、sm.ms等）上传截图
+    validations:
       required: false
