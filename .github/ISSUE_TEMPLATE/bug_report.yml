@@ -52,8 +52,6 @@ body:
     attributes:
       label: 补充说明
       placeholder: |
-        截图（请使用图床链接）、日志、相关配置信息等...
-        
-        提示：可使用图床网站（如imgur、sm.ms等）上传截图
+        截图（文件或图床链接）、日志、相关配置信息等...
     validations:
       required: false
