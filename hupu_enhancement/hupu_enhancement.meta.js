@@ -3,7 +3,7 @@
 // @name:en      Hupu Enhancement
 // @name:zh-CN   虎扑增强
 // @namespace    https://github.com/zhaeong97/
-// @version      1.4.1
+// @version      1.4.2
 // @description  虎扑帖子图片优化、视频悬浮、评论交互增强、工具栏优化等多项功能，提升虎扑浏览体验
 // @description:zh-CN  虎扑帖子图片优化、视频悬浮、评论交互增强、工具栏优化等多项功能，提升虎扑浏览体验
 // @description:en Hupu posts, image optimization, video hover effects, enhanced comment interactions, toolbar improvements, and more features to elevate your Hupu browsing experience.
@@ -23,6 +23,7 @@
 // @license      AGPL-3.0-or-later
 // @licenseURL   https://www.gnu.org/licenses/agpl-3.0.html
 // @noframes
+// @note         26-07-03 1.4.2 优化回复楼层中，'楼主' 标识只能打到最后一条楼主回复的问题
 // @note         25-12-02 1.4.1 优化视频悬浮窗功能并增强错误处理
 // @note         25-12-02 1.4.0 初版发布（本地反复打磨，4个功能模块，因此v1.4.0）
 // @homepage     https://github.com/zhaeong97/tampermonkey
